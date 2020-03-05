@@ -12,13 +12,13 @@ typedef struct{
 }Registro;
 
 int abreArquivo(FILE **arquivo){
-  	*arquivo = fopen(DIR_ARQ, MOD_ARQ);
-  	if(*arquivo == NULL){
-  		printf("Erro na abertura do arquivo!");
-  		return 0;
-  	}else{
-  		return 1;
-  	}
+	*arquivo = fopen(DIR_ARQ, MOD_ARQ);
+	if(*arquivo == NULL){
+		printf("Erro na abertura do arquivo!");
+		return 0;
+	}else{
+		return 1;
+	}
 }
 
 void fechaArquivo(FILE **arquivo){
@@ -35,9 +35,9 @@ void menuInicial(){
 }
 
 void imprimir(Registro registro){
-    printf("\nChave: %d", registro.chave); 
-    printf("\nValor: %d ", registro.valor); 
-    printf("\n"); 
+  printf("\nChave: %d", registro.chave); 
+  printf("\nValor: %d ", registro.valor); 
+  printf("\n"); 
 }
 
 int calculaHash(Registro r){
@@ -46,30 +46,24 @@ int calculaHash(Registro r){
 }
 
 void cadastrar(Registro registro, FILE **arquivo){
-    printf("Digite o código: "); 
-    scanf("%d%*c", &registro.chave); 
-    printf("Digite o valor: "); 
-    scanf("%d%*c", &registro.valor);
+  printf("Digite o código: "); 
+  scanf("%d%*c", &registro.chave); 
+  printf("Digite o valor: "); 
+  scanf("%d%*c", &registro.valor);
 
-    fseek(*arquivo, calculaHash(registro) * sizeof(registro), SEEK_SET); 
-    if(!fwrite(&registro, sizeof(registro), 1, *arquivo))
-    	printf("\nErro no cadastro\n");
+  fseek(*arquivo, calculaHash(registro) * sizeof(registro), SEEK_SET); 
+  if(!fwrite(&registro, sizeof(registro), 1, *arquivo))
+  	printf("\nErro no cadastro\n");
 }
 
 void remover(Registro r, int deslocamento, FILE **arquivo){
 	fseek(*arquivo, deslocamento * sizeof(r), SEEK_SET);
-	fread(&r, sizeof(r), 1, *arquivo);
-
-	if(r.chave == -1 && r.valor == -1){
-		printf("\nPosição vazia\n");
-	}else{
-		r.chave = -1;
-		r.valor = -1;
-		if(!fwrite(&r, sizeof(r), 1, *arquivo))
-			printf("\nErro na remoção\n");
-		else
-			printf("\nRemovido %d posição\n", deslocamento+1);
-	}
+	r.chave = -1;
+	r.valor = -1;
+	if(!fwrite(&r, sizeof(r), 1, *arquivo))
+		printf("\nErro na remoção\n");
+	else
+		printf("\nRemovido %d posição\n", deslocamento+1);
 }
 
 void consultar(Registro r, int deslocamento, FILE **arquivo){
@@ -95,52 +89,52 @@ void inicializa(FILE **arquivo){
 
 int main(void)
 {
-  	FILE *pont_arq;
-  	Registro registro;
-  	int opcao;
+	FILE *pont_arq;
+	Registro registro;
+	int opcao;
 
 	if(abreArquivo(&pont_arq) == 0)
   		return 1;
 
-  	inicializa(&pont_arq);
+	inicializa(&pont_arq);
 
-  	do{
-  		menuInicial();
-  		scanf("%d%*c",&opcao);
-  		printf("\n");
-  		switch(opcao){
-        	case 0:{
-        		break;
-        	}
-            case 1:{
-            	int posicao = 1;
-            	printf("Digite a posição para consulta: ");
-            	scanf("%d%*c", &posicao);
-            	consultar(registro, posicao-1, &pont_arq);
-                break;
-            }
-            case 2:{
-            	registro.chave = -1;
-            	registro.valor = -1;
-            	cadastrar(registro, &pont_arq);
-                break;
-            }
-            case 3:{     
-                int posicao = 1;
-            	printf("Digite a posição para remoção: ");
-            	scanf("%d%*c", &posicao);
-            	remover(registro, posicao-1, &pont_arq);
-                break;
-            }  
-            default:{
-            	printf("Opção inválida\n");
-            	break;
-            }   
-        }
-  	}while(opcao != 0);
+	do{
+		menuInicial();
+		scanf("%d%*c",&opcao);
+		printf("\n");
+		switch(opcao){
+      	case 0:{
+      		break;
+      	}
+          case 1:{
+          	int posicao = 1;
+          	printf("Digite a posição para consulta: ");
+          	scanf("%d%*c", &posicao);
+          	consultar(registro, posicao-1, &pont_arq);
+            break;
+          }
+          case 2:{
+          	registro.chave = -1;
+          	registro.valor = -1;
+          	cadastrar(registro, &pont_arq);
+            break;
+          }
+          case 3:{     
+            int posicao = 1;
+          	printf("Digite a posição para remoção: ");
+          	scanf("%d%*c", &posicao);
+          	remover(registro, posicao-1, &pont_arq);
+            break;
+          }  
+          default:{
+          	printf("Opção inválida\n");
+          	break;
+          }   
+      }
+	}while(opcao != 0);
   	
-  	printf("\n");
-  	fechaArquivo(&pont_arq);
-  	return(0);
+	printf("\n");
+	fechaArquivo(&pont_arq);
+	return(0);
 }
 
