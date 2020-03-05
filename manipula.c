@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 
 const char *const DIR_ARQ = "arquivo";
 const char *const MOD_ARQ = "w+";
@@ -103,35 +102,35 @@ int main(void)
 		scanf("%d%*c",&opcao);
 		printf("\n");
 		switch(opcao){
-      	case 0:{
-      		break;
-      	}
-          case 1:{
-          	int posicao = 1;
-          	printf("Digite a posição para consulta: ");
-          	scanf("%d%*c", &posicao);
-          	consultar(registro, posicao-1, &pont_arq);
-            break;
-          }
-          case 2:{
-          	registro.chave = -1;
-          	registro.valor = -1;
-          	cadastrar(registro, &pont_arq);
-            break;
-          }
-          case 3:{     
-            int posicao = 1;
-          	printf("Digite a posição para remoção: ");
-          	scanf("%d%*c", &posicao);
-          	remover(registro, posicao-1, &pont_arq);
-            break;
-          }  
-          default:{
-          	printf("Opção inválida\n");
-          	break;
-          }   
+    	case 0:{
+    		break;
+    	}
+      case 1:{
+      	int posicao = 1;
+      	printf("Digite a posição para consulta: ");
+      	scanf("%d%*c", &posicao);
+      	consultar(registro, posicao-1, &pont_arq);
+        break;
       }
-	}while(opcao != 0);
+      case 2:{
+      	registro.chave = -1;
+      	registro.valor = -1;
+      	cadastrar(registro, &pont_arq);
+        break;
+      }
+      case 3:{     
+        int posicao = 1;
+      	printf("Digite a posição para remoção: ");
+      	scanf("%d%*c", &posicao);
+      	remover(registro, posicao-1, &pont_arq);
+        break;
+      }  
+      default:{
+      	printf("Opção inválida\n");
+      	break;
+      }   
+    }
+  }while(opcao != 0);
   	
 	printf("\n");
 	fechaArquivo(&pont_arq);
