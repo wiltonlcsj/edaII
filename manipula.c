@@ -150,7 +150,7 @@ int main(void) {
   }
 
   do {
-    scanf("%c", &opcao);
+    scanf("%c%*c", &opcao);
     switch (opcao) {
       case 'e': {
         break;
