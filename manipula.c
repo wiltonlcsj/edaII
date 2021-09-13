@@ -46,17 +46,6 @@ void fechaArquivo(FILE **arquivo) {
   fclose(*arquivo);
 }
 
-void menuInicial() {
-  printf("\nEscolha uma opção válida\n");
-  printf("e - Fechar programa\n");
-  printf("c - Consultar\n");
-  printf("i - Inserir\n");
-  printf("r - Remover\n");
-  printf("p - Imprimir arquivo\n");
-  printf("m - Média de acessos\n");
-  printf("Digite a opção correspondente:");
-}
-
 int calculaHash(Registro r) {
   //h1 = chave % MAXNUMREGS
   //h2 = max(floor(chave/MAXNUMREGS) % MAXNUMREGS, 1)
@@ -88,11 +77,9 @@ void cadastrar(Registro registro, FILE **arquivo) {
 }
 
 void imprimir(Registro registro) {
-  printf("\nchave: %d", registro.dado.chave);
-  printf("\nnome: %s", registro.dado.nome);
-  printf("\nidade: %d", registro.dado.idade);
-  printf("\nprimeira: %d", registro.primeiravez);
-  printf("\nocupado: %d", registro.ocupado);
+  printf("\n%d", registro.dado.chave);
+  printf("\n%s", registro.dado.nome);
+  printf("\n%d", registro.dado.idade);
   printf("\n");
 }
 
@@ -163,7 +150,6 @@ int main(void) {
   }
 
   do {
-    menuInicial();
     scanf("%c", &opcao);
     switch (opcao) {
       case 'e': {
@@ -171,8 +157,7 @@ int main(void) {
       }
       case 'c': {
         //Deve consultar a chave
-        int chave = 1;
-        printf("Digite a chave para consulta: ");
+        int chave;
         scanf("%d%*c", &chave);
         consultar(registro, chave, chave - 1, &pont_arq);
         break;
@@ -184,8 +169,7 @@ int main(void) {
       }
       case 'r': {
         //Deve remover a chave
-        int chave = 1;
-        printf("Digite a chave para remoção: ");
+        int chave;
         scanf("%d%*c", &chave);
         remover(registro, chave, chave - 1, &pont_arq);
         break;
