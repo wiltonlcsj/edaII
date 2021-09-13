@@ -1,23 +1,24 @@
 #include <stdio.h>
-#include<stdbool.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 const int MAXNUMREGS = 11;
 
 typedef struct {
-    int chave;
-    char nome[20];
-    int idade;
+  int chave;
+  char nome[20];
+  int idade;
 } Dado;
 
 typedef struct {
-    bool ocupado;
-    bool primeiravez;
-    Dado dado;
+  bool ocupado;
+  bool primeiravez;
+  Dado dado;
 } Registro;
 
-void inicializa(FILE **arquivo) {
+void inicializa(FILE** arquivo) {
   Registro r;
   r.primeiravez = true;
   r.ocupado = false;
@@ -27,7 +28,7 @@ void inicializa(FILE **arquivo) {
   }
 }
 
-int abreArquivo(FILE **arquivo) {
+int abreArquivo(FILE** arquivo) {
   *arquivo = fopen("arquivo", "r+");
   if (*arquivo == NULL) {
     *arquivo = fopen("arquivo", "w+");
@@ -42,72 +43,186 @@ int abreArquivo(FILE **arquivo) {
   return 1;
 }
 
-void fechaArquivo(FILE **arquivo) {
+void fechaArquivo(FILE** arquivo) {
   fclose(*arquivo);
 }
 
-int calculaHash(Registro r) {
-  //h1 = chave % MAXNUMREGS
-  //h2 = max(floor(chave/MAXNUMREGS) % MAXNUMREGS, 1)
-  // Função para calcular a posição
-  return r.dado.chave - 1;
+int buscaChave(int chave, FILE** arquivo) {
+  int h1 = chave % MAXNUMREGS;
+  int v1 = (int)floor(chave / MAXNUMREGS) % MAXNUMREGS;
+  int h2 = 1;
+  if (v1 > h2) {
+    h2 = v1;
+  }
+
+  int deslocamento = h1;
+  fseek(*arquivo, deslocamento * sizeof(Registro), SEEK_SET);
+
+  Registro r;
+  fread(&r, sizeof(r), 1, *arquivo);
+
+  if (r.ocupado == false && r.primeiravez == true) {
+    return -1;
+  } else if (r.ocupado == true && r.dado.chave == chave) {
+    return deslocamento;
+  }
+
+  bool terminou = false;
+  int indice = 1;
+  while (terminou != true) {
+    deslocamento += (h2 * indice);
+
+    if (deslocamento > MAXNUMREGS) {
+      deslocamento -= MAXNUMREGS;
+    }
+
+    if (deslocamento == h1) {
+      deslocamento = -1;
+      terminou = true;
+    }
+
+    fseek(*arquivo, deslocamento * sizeof(Registro), SEEK_SET);
+    fread(&r, sizeof(r), 1, *arquivo);
+
+    if (r.ocupado == false && r.primeiravez == true) {
+      deslocamento = -1;
+      terminou = true;
+    } else if (r.ocupado == true && r.dado.chave == chave) {
+      terminou = true;
+    } else {
+      indice++;
+    }
+  }
+
+  return deslocamento;
 }
 
-void cadastrar(Registro registro, FILE **arquivo) {
-  scanf("%d%*c", &registro.dado.chave);
+int calculaHash(int chave, FILE** arquivo) {
+  int h1 = chave % MAXNUMREGS;
+  int v1 = (int)floor(chave / MAXNUMREGS) % MAXNUMREGS;
+  int h2 = 1;
 
-  fgets(registro.dado.nome, 20, stdin);
+  if (v1 > h2) {
+    h2 = v1;
+  }
+
+  int deslocamento = h1;
+  fseek(*arquivo, deslocamento * sizeof(Registro), SEEK_SET);
+
+  Registro r;
+  fread(&r, sizeof(r), 1, *arquivo);
+
+  if (r.ocupado == false && r.primeiravez == true) {
+    return deslocamento;
+  } else if (r.ocupado == true && r.dado.chave == chave) {
+    return -1;
+  }
+
+  bool terminou = false;
+  int indice = 1;
+  while (terminou != true) {
+    deslocamento += (h2 * indice);
+
+    if (deslocamento > MAXNUMREGS) {
+      deslocamento -= MAXNUMREGS;
+    }
+
+    if (deslocamento == h1) {
+      deslocamento = -2;
+      terminou = true;
+    }
+
+    fseek(*arquivo, deslocamento * sizeof(Registro), SEEK_SET);
+    fread(&r, sizeof(r), 1, *arquivo);
+
+    if (r.ocupado == false && r.primeiravez == true) {
+      terminou = true;
+    } else if (r.ocupado == true && r.dado.chave == chave) {
+      terminou = true;
+      deslocamento = -1;
+    } else {
+      indice++;
+    }
+  }
+  
+  return deslocamento;
+}
+
+void cadastrar(FILE** arquivo) {
+  Registro r;
+  scanf("%d%*c", &r.dado.chave);
+
+  fgets(r.dado.nome, 20, stdin);
   //Limpando enter final do buffer
-  size_t ln = strlen(registro.dado.nome) - 1;
-  if (registro.dado.nome[ln] == '\n')
-    registro.dado.nome[ln] = '\0';
+  size_t ln = strlen(r.dado.nome) - 1;
+  if (r.dado.nome[ln] == '\n')
+    r.dado.nome[ln] = '\0';
 
-  scanf("%d%*c", &registro.dado.idade);
+  scanf("%d%*c", &r.dado.idade);
 
-  registro.ocupado = true;
-  registro.primeiravez = false;
+  r.ocupado = true;
+  r.primeiravez = false;
+  
+  int deslocamento = calculaHash(r.dado.chave, arquivo);
 
-  //TODO verificar se a chave já está no arquivo, se sim retornar "chave ja existente: r.dado.chave"
-  //TODO se salvar corretamente deve retornar "insercao com sucesso: r.dado.chave"
-  //TODO caso o arquivo esteja cheio deve retornar: "insercao de chave sem sucesso - arquivo cheio: r.dado.chave"
+  if (deslocamento == -1) {
+    printf("chave ja existente: %d\n", r.dado.chave);
+    return;
+  } else if (deslocamento == -2) {
+    printf("insercao de chave sem sucesso - arquivo cheio: %d\n", r.dado.chave);
+    return;
+  }
 
-  fseek(*arquivo, calculaHash(registro) * sizeof(registro), SEEK_SET);
-  if (!fwrite(&registro, sizeof(registro), 1, *arquivo))
-    printf("Erro no cadastro\n");
+  fseek(*arquivo, deslocamento * sizeof(r), SEEK_SET);
+  if (fwrite(&r, sizeof(r), 1, *arquivo))
+    printf("insercao com sucesso: %d\n", r.dado.chave);
 }
 
 void imprimir(Registro registro) {
-  printf("\n%d", registro.dado.chave);
+  printf("%d", registro.dado.chave);
   printf("\n%s", registro.dado.nome);
   printf("\n%d", registro.dado.idade);
   printf("\n");
 }
 
-void consultar(Registro r, int chave, int deslocamento, FILE **arquivo) {
+void consultar(FILE** arquivo) {
+  int chave;
+  scanf("%d%*c", &chave);
+  
+  int deslocamento = buscaChave(chave, arquivo);
+
+  if (deslocamento == -1) {
+    printf("chave nao encontrada: %d\n", chave);
+    return;
+  }
+
+  Registro r;
+  fseek(*arquivo, deslocamento * sizeof(r), SEEK_SET);
+  fread(&r, sizeof(r), 1, *arquivo);
+  imprimir(r);
+}
+
+void remover(FILE** arquivo) {
+  int chave;
+  scanf("%d%*c", &chave);
+  
+  int deslocamento = buscaChave(chave, arquivo);
+
+  if (deslocamento == -1) {
+    printf("chave nao encontrada: %d\n", chave);
+    return;
+  }
+
+  Registro r;
   fseek(*arquivo, deslocamento * sizeof(r), SEEK_SET);
   fread(&r, sizeof(r), 1, *arquivo);
 
-  if (!r.ocupado) {
-    printf("chave nao encontrada: %d\n", chave);
-  } else {
-    imprimir(r);
-  }
-}
-
-
-void remover(Registro r, int chave, int deslocamento, FILE **arquivo) {
-  fseek(*arquivo, deslocamento * sizeof(r), SEEK_SET);
   r.ocupado = false;
-
-  //TODO verificar se a chave não estiver no arquivo gerar "chave nao encontrada: r.dado.chave"
-
-  if (!fwrite(&r, sizeof(r), 1, *arquivo))
-    printf("Erro na remoção\n");
-  else
+  if (fwrite(&r, sizeof(r), 1, *arquivo))
     printf("chave removida com sucesso: %d\n", chave);
 }
 
-void imprimeArquivo(FILE **arquivo) {
+void imprimeArquivo(FILE** arquivo) {
   Registro r;
   fseek(*arquivo, sizeof(r), SEEK_SET);
 
@@ -129,8 +244,10 @@ void imprimeArquivo(FILE **arquivo) {
   }
 }
 
-void mediaAcessos(FILE **arquivo) {
+void mediaAcessos(FILE** arquivo) {
   //TODO calcular o numero médio de acessos a consultas com e sem sucesso;
+  fseek(*arquivo, sizeof(Registro), SEEK_SET);
+
   float comSucesso = 0;
   float semSucesso = 0;
 
@@ -140,7 +257,7 @@ void mediaAcessos(FILE **arquivo) {
 
 
 int main(void) {
-  FILE *pont_arq;
+  FILE* pont_arq;
   Registro registro;
   char opcao;
 
@@ -152,40 +269,36 @@ int main(void) {
   do {
     scanf("%c%*c", &opcao);
     switch (opcao) {
-      case 'e': {
-        break;
-      }
-      case 'c': {
-        //Deve consultar a chave
-        int chave;
-        scanf("%d%*c", &chave);
-        consultar(registro, chave, chave - 1, &pont_arq);
-        break;
-      }
-      case 'i': {
-        //Deve inserir o registro
-        cadastrar(registro, &pont_arq);
-        break;
-      }
-      case 'r': {
-        //Deve remover a chave
-        int chave;
-        scanf("%d%*c", &chave);
-        remover(registro, chave, chave - 1, &pont_arq);
-        break;
-      }
-      case 'p': {
-        //Deve imprimir o arquivo
-        imprimeArquivo(&pont_arq);
-        break;
-      }
-      case 'm': {
-        //Deve calcular a média de acessos
-        mediaAcessos(&pont_arq);
-        break;
-      }
-      default:
-        break;
+    case 'e': {
+      break;
+    }
+    case 'c': {
+      //Deve consultar a chave
+      consultar(&pont_arq);
+      break;
+    }
+    case 'i': {
+      //Deve inserir o registro
+      cadastrar(&pont_arq);
+      break;
+    }
+    case 'r': {
+      //Deve remover a chave
+      remover(&pont_arq);
+      break;
+    }
+    case 'p': {
+      //Deve imprimir o arquivo
+      imprimeArquivo(&pont_arq);
+      break;
+    }
+    case 'm': {
+      //Deve calcular a média de acessos
+      mediaAcessos(&pont_arq);
+      break;
+    }
+    default:
+      break;
     }
   } while (opcao != 'e');
   fechaArquivo(&pont_arq);
