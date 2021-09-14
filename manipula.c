@@ -23,6 +23,7 @@ void inicializa(FILE** arquivo) {
   r.primeiravez = true;
   r.ocupado = false;
 
+  fseek(*arquivo, sizeof(Registro), SEEK_SET);
   for (int i = 0; i < MAXNUMREGS; i++) {
     fwrite(&r, sizeof(Registro), 1, *arquivo);
   }
@@ -48,7 +49,7 @@ void fechaArquivo(FILE** arquivo) {
 }
 
 int buscaChave(int chave, FILE** arquivo) {
-  int h1 = chave % MAXNUMREGS;
+  int h1 = (chave % MAXNUMREGS)+1;
   int v1 = (int)floor(chave / MAXNUMREGS) % MAXNUMREGS;
   int h2 = 1;
   if (v1 > h2) {
@@ -68,9 +69,8 @@ int buscaChave(int chave, FILE** arquivo) {
   }
 
   bool terminou = false;
-  int indice = 1;
   while (terminou != true) {
-    deslocamento += (h2 * indice);
+    deslocamento += h2;
 
     if (deslocamento > MAXNUMREGS) {
       deslocamento -= MAXNUMREGS;
@@ -89,8 +89,6 @@ int buscaChave(int chave, FILE** arquivo) {
       terminou = true;
     } else if (r.ocupado == true && r.dado.chave == chave) {
       terminou = true;
-    } else {
-      indice++;
     }
   }
 
@@ -98,7 +96,7 @@ int buscaChave(int chave, FILE** arquivo) {
 }
 
 int calculaHash(int chave, FILE** arquivo) {
-  int h1 = chave % MAXNUMREGS;
+  int h1 = (chave % MAXNUMREGS)+1;
   int v1 = (int)floor(chave / MAXNUMREGS) % MAXNUMREGS;
   int h2 = 1;
 
@@ -119,9 +117,8 @@ int calculaHash(int chave, FILE** arquivo) {
   }
 
   bool terminou = false;
-  int indice = 1;
   while (terminou != true) {
-    deslocamento += (h2 * indice);
+    deslocamento += h2;
 
     if (deslocamento > MAXNUMREGS) {
       deslocamento -= MAXNUMREGS;
@@ -140,11 +137,9 @@ int calculaHash(int chave, FILE** arquivo) {
     } else if (r.ocupado == true && r.dado.chave == chave) {
       terminou = true;
       deslocamento = -1;
-    } else {
-      indice++;
     }
   }
-  
+
   return deslocamento;
 }
 
@@ -218,6 +213,7 @@ void remover(FILE** arquivo) {
   fread(&r, sizeof(r), 1, *arquivo);
 
   r.ocupado = false;
+  fseek(*arquivo, deslocamento * sizeof(r), SEEK_SET);
   if (fwrite(&r, sizeof(r), 1, *arquivo))
     printf("chave removida com sucesso: %d\n", chave);
 }
@@ -295,6 +291,11 @@ int main(void) {
     case 'm': {
       //Deve calcular a média de acessos
       mediaAcessos(&pont_arq);
+      break;
+    }
+    case 'x': {
+      //Limpa os registros (remover depois)
+      inicializa(&pont_arq);
       break;
     }
     default:
