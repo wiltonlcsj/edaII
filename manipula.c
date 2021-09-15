@@ -18,6 +18,13 @@ typedef struct {
   Dado dado;
 } Registro;
 
+typedef struct {
+  int sucessoTotalAcessos;
+  int sucessoTotalQuantidade;
+  int falhaTotalAcessos;
+  int falhaTotalQuantidade;
+} Acessos;
+
 void inicializa(FILE** arquivo) {
   Registro r;
   r.primeiravez = true;
@@ -48,8 +55,8 @@ void fechaArquivo(FILE** arquivo) {
   fclose(*arquivo);
 }
 
-int buscaChave(int chave, FILE** arquivo) {
-  int h1 = (chave % MAXNUMREGS)+1;
+int buscaChave(int chave, FILE** arquivo, Acessos* acessos, bool remocao) {
+  int h1 = (chave % MAXNUMREGS) + 1;
   int v1 = (int)floor(chave / MAXNUMREGS) % MAXNUMREGS;
   int h2 = 1;
   if (v1 > h2) {
@@ -96,7 +103,7 @@ int buscaChave(int chave, FILE** arquivo) {
 }
 
 int calculaHash(int chave, FILE** arquivo) {
-  int h1 = (chave % MAXNUMREGS)+1;
+  int h1 = (chave % MAXNUMREGS) + 1;
   int v1 = (int)floor(chave / MAXNUMREGS) % MAXNUMREGS;
   int h2 = 1;
 
@@ -157,7 +164,7 @@ void cadastrar(FILE** arquivo) {
 
   r.ocupado = true;
   r.primeiravez = false;
-  
+
   int deslocamento = calculaHash(r.dado.chave, arquivo);
 
   if (deslocamento == -1) {
@@ -180,11 +187,11 @@ void imprimir(Registro registro) {
   printf("\n");
 }
 
-void consultar(FILE** arquivo) {
+void consultar(FILE** arquivo, Acessos* acessos) {
   int chave;
   scanf("%d%*c", &chave);
-  
-  int deslocamento = buscaChave(chave, arquivo);
+
+  int deslocamento = buscaChave(chave, arquivo, acessos, false);
 
   if (deslocamento == -1) {
     printf("chave nao encontrada: %d\n", chave);
@@ -200,8 +207,8 @@ void consultar(FILE** arquivo) {
 void remover(FILE** arquivo) {
   int chave;
   scanf("%d%*c", &chave);
-  
-  int deslocamento = buscaChave(chave, arquivo);
+
+  int deslocamento = buscaChave(chave, arquivo, NULL, true);
 
   if (deslocamento == -1) {
     printf("chave nao encontrada: %d\n", chave);
@@ -240,12 +247,17 @@ void imprimeArquivo(FILE** arquivo) {
   }
 }
 
-void mediaAcessos(FILE** arquivo) {
-  //TODO calcular o numero médio de acessos a consultas com e sem sucesso;
+void mediaAcessos(FILE** arquivo, Acessos acessos) {
   fseek(*arquivo, sizeof(Registro), SEEK_SET);
 
-  float comSucesso = 0;
-  float semSucesso = 0;
+  float comSucesso = 0.0;
+  float semSucesso = 0.0;
+
+  if (acessos.sucessoTotalQuantidade > 0)
+    comSucesso = acessos.sucessoTotalAcessos / acessos.sucessoTotalQuantidade;
+
+  if (acessos.falhaTotalQuantidade > 0)
+    semSucesso = acessos.falhaTotalAcessos / acessos.falhaTotalQuantidade;
 
   printf("%.1f\n", comSucesso);
   printf("%.1f\n", semSucesso);
@@ -261,6 +273,12 @@ int main(void) {
     exit(-1);
   }
 
+  Acessos qntAcessos;
+  qntAcessos.falhaTotalAcessos = 0;
+  qntAcessos.falhaTotalQuantidade = 0;
+  qntAcessos.sucessoTotalAcessos = 0;
+  qntAcessos.sucessoTotalQuantidade = 0;
+
   do {
     scanf("%c%*c", &opcao);
     switch (opcao) {
@@ -269,7 +287,7 @@ int main(void) {
     }
     case 'c': {
       //Deve consultar a chave
-      consultar(&pont_arq);
+      consultar(&pont_arq, &qntAcessos);
       break;
     }
     case 'i': {
@@ -289,7 +307,7 @@ int main(void) {
     }
     case 'm': {
       //Deve calcular a média de acessos
-      mediaAcessos(&pont_arq);
+      mediaAcessos(&pont_arq, qntAcessos);
       break;
     }
     case 'x': {
