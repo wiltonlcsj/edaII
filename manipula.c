@@ -66,17 +66,28 @@ int buscaChave(int chave, FILE** arquivo, Acessos* acessos, bool remocao) {
   int deslocamento = h1;
   fseek(*arquivo, deslocamento * sizeof(Registro), SEEK_SET);
 
+  int loopsAcesso = 1;
+
   Registro r;
   fread(&r, sizeof(r), 1, *arquivo);
 
   if (r.ocupado == false && r.primeiravez == true) {
+    if (remocao == false) {
+      acessos->falhaTotalAcessos += loopsAcesso;
+      acessos->falhaTotalQuantidade += 1;
+    }
     return -1;
   } else if (r.ocupado == true && r.dado.chave == chave) {
+    if (remocao == false) {
+      acessos->sucessoTotalAcessos += loopsAcesso;
+      acessos->sucessoTotalQuantidade += 1;
+    }
     return deslocamento;
   }
 
   bool terminou = false;
   while (terminou != true) {
+    loopsAcesso++;
     deslocamento += h2;
 
     if (deslocamento > MAXNUMREGS) {
@@ -85,6 +96,10 @@ int buscaChave(int chave, FILE** arquivo, Acessos* acessos, bool remocao) {
 
     if (deslocamento == h1) {
       deslocamento = -1;
+      if (remocao == false) {
+        acessos->falhaTotalAcessos += loopsAcesso;
+        acessos->falhaTotalQuantidade += 1;
+      }
       terminou = true;
     }
 
@@ -92,6 +107,10 @@ int buscaChave(int chave, FILE** arquivo, Acessos* acessos, bool remocao) {
     fread(&r, sizeof(r), 1, *arquivo);
 
     if (r.ocupado == false && r.primeiravez == true) {
+      if (remocao == false) {
+        acessos->falhaTotalAcessos += loopsAcesso;
+        acessos->falhaTotalQuantidade += 1;
+      }
       deslocamento = -1;
       terminou = true;
     } else if (r.ocupado == true && r.dado.chave == chave) {
@@ -99,6 +118,10 @@ int buscaChave(int chave, FILE** arquivo, Acessos* acessos, bool remocao) {
     }
   }
 
+  if (remocao == false) {
+    acessos->sucessoTotalAcessos += loopsAcesso;
+    acessos->sucessoTotalQuantidade += 1;
+  }
   return deslocamento;
 }
 
@@ -254,10 +277,10 @@ void mediaAcessos(FILE** arquivo, Acessos acessos) {
   float semSucesso = 0.0;
 
   if (acessos.sucessoTotalQuantidade > 0)
-    comSucesso = acessos.sucessoTotalAcessos / acessos.sucessoTotalQuantidade;
+    comSucesso = (float)acessos.sucessoTotalAcessos / (float)acessos.sucessoTotalQuantidade;
 
   if (acessos.falhaTotalQuantidade > 0)
-    semSucesso = acessos.falhaTotalAcessos / acessos.falhaTotalQuantidade;
+    semSucesso = (float)acessos.falhaTotalAcessos / (float)acessos.falhaTotalQuantidade;
 
   printf("%.1f\n", comSucesso);
   printf("%.1f\n", semSucesso);
