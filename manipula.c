@@ -135,6 +135,7 @@ int calculaHash(int chave, FILE** arquivo) {
   }
 
   int deslocamento = h1;
+  int primeiraPos = -1;
   fseek(*arquivo, deslocamento * sizeof(Registro), SEEK_SET);
 
   Registro r;
@@ -144,6 +145,8 @@ int calculaHash(int chave, FILE** arquivo) {
     return deslocamento;
   } else if (r.ocupado == true && r.dado.chave == chave) {
     return -1;
+  } else if (r.ocupado == false) {
+    primeiraPos = deslocamento;
   }
 
   bool terminou = false;
@@ -167,7 +170,13 @@ int calculaHash(int chave, FILE** arquivo) {
     } else if (r.ocupado == true && r.dado.chave == chave) {
       terminou = true;
       deslocamento = -1;
+    } else if (r.ocupado == false && primeiraPos == -1) {
+      primeiraPos = deslocamento;
     }
+  }
+
+  if (deslocamento != -1 && primeiraPos != -1) {
+    return primeiraPos;
   }
 
   return deslocamento;
