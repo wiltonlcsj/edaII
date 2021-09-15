@@ -115,13 +115,13 @@ int buscaChave(int chave, FILE** arquivo, Acessos* acessos, bool remocao) {
       terminou = true;
     } else if (r.ocupado == true && r.dado.chave == chave) {
       terminou = true;
+      if (remocao == false) {
+        acessos->sucessoTotalAcessos += loopsAcesso;
+        acessos->sucessoTotalQuantidade += 1;
+      }
     }
   }
 
-  if (remocao == false) {
-    acessos->sucessoTotalAcessos += loopsAcesso;
-    acessos->sucessoTotalQuantidade += 1;
-  }
   return deslocamento;
 }
 
