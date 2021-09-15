@@ -254,7 +254,6 @@ void mediaAcessos(FILE** arquivo) {
 
 int main(void) {
   FILE* pont_arq;
-  Registro registro;
   char opcao;
 
   if (abreArquivo(&pont_arq) == 0) {
