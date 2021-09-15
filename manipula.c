@@ -174,7 +174,7 @@ void cadastrar(FILE** arquivo) {
 }
 
 void imprimir(Registro registro) {
-  printf("%d", registro.dado.chave);
+  printf("chave: %d", registro.dado.chave);
   printf("\n%s", registro.dado.nome);
   printf("\n%d", registro.dado.idade);
   printf("\n");
